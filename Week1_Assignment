@@ -140,7 +140,7 @@ JOIN Person.CountryRegion ON Person.StateProvince.CountryRegionCode = Person.Cou
 GROUP BY Person.CountryRegion.Name;
 
 
--- Question 21: Customer ContactName and number of orders
+-- Question 21: List of Customer ContactName and number of orders they placed
 
 SELECT p.FirstName + ' ' + p.LastName AS ContactName, COUNT(soh.SalesOrderID) AS OrderCount
 FROM Sales.Customer c
@@ -148,7 +148,7 @@ JOIN Person.Person p ON c.PersonID = p.BusinessEntityID
 JOIN Sales.SalesOrderHeader soh ON c.CustomerID = soh.CustomerID
 GROUP BY p.FirstName, p.LastName;
 
--- Question 22: Customers who placed more than 3 orders
+-- Question 22: List of Customers contactnames who placed more than 3 orders
 
 SELECT p.FirstName + ' ' + p.LastName AS ContactName, COUNT(*) AS OrderCount
 FROM Sales.Customer c
@@ -157,7 +157,7 @@ JOIN Sales.SalesOrderHeader soh ON c.CustomerID = soh.CustomerID
 GROUP BY p.FirstName, p.LastName
 HAVING COUNT(*) > 3;
 
--- Question 23: Discontinued products ordered between 1/1/1997 and 1/1/1998
+-- Question 23: List of Discontinued products ordered between 1/1/1997 and 1/1/1998
 
 SELECT DISTINCT p.Name
 FROM Production.Product p
@@ -166,7 +166,7 @@ JOIN Sales.SalesOrderHeader soh ON sod.SalesOrderID = soh.SalesOrderID
 WHERE p.DiscontinuedDate IS NOT NULL
 AND soh.OrderDate BETWEEN '1997-01-01' AND '1998-01-01';
 
--- Question 24: Employee name and supervisor name
+-- Question 24: List of Employee firstname, lastname, supervisor FirstName, LastName
 
 SELECT e.BusinessEntityID, p1.FirstName + ' ' + p1.LastName AS EmployeeName,
        p2.FirstName + ' ' + p2.LastName AS SupervisorName
@@ -175,36 +175,36 @@ LEFT JOIN HumanResources.Employee m ON e.OrganizationNode.GetAncestor(1) = m.Org
 JOIN Person.Person p1 ON e.BusinessEntityID = p1.BusinessEntityID
 LEFT JOIN Person.Person p2 ON m.BusinessEntityID = p2.BusinessEntityID;
 
--- Question 25: Employee ID and total sales
+-- Question 25: List of Employee ID and total sales counducted by employee
 
 SELECT soh.SalesPersonID AS EmployeeID, SUM(soh.TotalDue) AS TotalSales
 FROM Sales.SalesOrderHeader soh
 WHERE soh.SalesPersonID IS NOT NULL
 GROUP BY soh.SalesPersonID;
 
--- Question 26: Employees whose FirstName contains 'a'
+-- Question 26: List of Employees whose FirstName contains 'a'
 
 SELECT FirstName, LastName
 FROM Person.Person
 WHERE FirstName LIKE '%a%';
 
--- Question 27: Managers with more than 4 people reporting to them
+-- Question 27: List of Managers with more than 4 people reporting to them
 
 
--- Question 28: Orders and Product Names
+-- Question 28: List of Orders and Product Names
 
 SELECT soh.SalesOrderID, p.Name AS ProductName
 FROM Sales.SalesOrderHeader soh
 JOIN Sales.SalesOrderDetail sod ON soh.SalesOrderID = sod.SalesOrderID
 JOIN Production.Product p ON sod.ProductID = p.ProductID;
 
--- Question 29: Orders placed by the best customer
+-- Question 29: List of Orders placed by the best customer
 
 
--- Question 30: Orders by customers without Fax
+-- Question 30: List of Orders by customers without Fax number
 
 
--- Question 31: Postal codes where Tofu was shipped
+-- Question 31: List of Postal codes where Tofu was shipped
 
 SELECT DISTINCT a.PostalCode
 FROM Sales.SalesOrderDetail sod
@@ -213,7 +213,7 @@ JOIN Sales.SalesOrderHeader soh ON sod.SalesOrderID = soh.SalesOrderID
 JOIN Person.Address a ON soh.ShipToAddressID = a.AddressID
 WHERE p.Name = 'Tofu';
 
--- Question 32: Product names shipped to France
+-- Question 32: List of Product names shipped to France
 
 SELECT DISTINCT Production.Product.Name
 FROM Production.Product
@@ -225,7 +225,7 @@ JOIN Person.CountryRegion ON Person.StateProvince.CountryRegionCode = Person.Cou
 WHERE Person.CountryRegion.Name = 'France';
 
 
--- Question 33: Product names and categories for supplier 'Specialty Biscuits, Ltd.'
+-- Question 33: List of Product names and categories for supplier 'Specialty Biscuits, Ltd.'
 
 SELECT Production.Product.Name AS ProductName, Production.ProductCategory.Name AS Category
 FROM Purchasing.ProductVendor
@@ -236,20 +236,20 @@ JOIN Purchasing.Vendor ON Purchasing.ProductVendor.BusinessEntityID = Purchasing
 WHERE Purchasing.Vendor.Name = 'Specialty Biscuits, Ltd.';
 
 
--- Question 34: Products never ordered
+-- Question 34: List of Products never ordered
 
 SELECT p.Name
 FROM Production.Product p
 LEFT JOIN Sales.SalesOrderDetail sod ON p.ProductID = sod.ProductID
 WHERE sod.ProductID IS NULL;
 
--- Question 35: Products with stock < 10 and on order = 0
+-- Question 35: List of Products with stock < 10 and on order = 0
 
 SELECT Name
 FROM Production.Product
 WHERE SafetyStockLevel < 10 AND ReorderPoint = 0;
 
--- Question 36: Top 10 countries by sales
+-- Question 36: List of Top 10 countries by sales
 
 SELECT TOP 10 cr.Name AS Country, SUM(soh.TotalDue) AS Sales
 FROM Sales.SalesOrderHeader soh
@@ -260,7 +260,7 @@ GROUP BY cr.Name
 ORDER BY Sales DESC;
 
 
--- Question 37: Orders per employee for customers A to AO
+-- Question 37: Number of Orders each employee has taken for customers with CustomerIDs between A to AO
 
 SELECT SalesPersonID, COUNT(*) AS OrderCount
 FROM Sales.SalesOrderHeader soh
@@ -274,7 +274,7 @@ SELECT TOP 1 OrderDate, TotalDue
 FROM Sales.SalesOrderHeader
 ORDER BY TotalDue DESC;
 
--- Question 39: Product name and total revenue
+-- Question 39: Product name and total revenue from that product
 
 SELECT p.Name, SUM(sod.LineTotal) AS Revenue
 FROM Sales.SalesOrderDetail sod
@@ -293,7 +293,7 @@ JOIN Sales.Customer c ON soh.CustomerID = c.CustomerID
 GROUP BY c.CustomerID
 ORDER BY TotalPurchase DESC;
 
--- Question 42: Total revenue of the company
+-- Question 42: What is the Total revenue of the company
 
 SELECT SUM(TotalDue) AS TotalRevenue
 FROM Sales.SalesOrderHeader;
