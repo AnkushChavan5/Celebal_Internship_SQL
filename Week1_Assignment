@@ -1,1 +1,299 @@
+-- 1. List of all customers
 
+SELECT ISNULL(Person.Person.FirstName + ' ' + Person.Person.LastName, Sales.Store.Name) AS CustomerName
+FROM Sales.Customer 
+LEFT JOIN Person.Person  ON Sales.Customer.PersonID = Person.Person.BusinessEntityID
+LEFT JOIN Sales.Store  ON Sales.Customer.StoreID = Sales.Store.BusinessEntityID;
+
+-- 2. List of all customers where company name ending in N
+
+SELECT Sales.Store.Name AS CompanyName
+FROM Sales.Customer 
+JOIN Sales.Store  ON Sales.Customer.StoreID = Sales.Store.BusinessEntityID
+WHERE Sales.Store.Name LIKE '%N';
+
+-- 3. List of all customers who live in Berlin or London
+
+SELECT ISNULL(Person.Person.FirstName + ' ' + Person.Person.LastName, Sales.Store.Name) AS CustomerName
+FROM Sales.Customer 
+LEFT JOIN Person.Person  ON Sales.Customer.PersonID = Person.Person.BusinessEntityID
+LEFT JOIN Sales.Store  ON Sales.Customer.StoreID = Sales.Store.BusinessEntityID
+JOIN Person.BusinessEntityAddress ON Person.BusinessEntityAddress.BusinessEntityID = Sales.Customer.CustomerID
+JOIN Person.Address  ON Person.Address.AddressID = Person.BusinessEntityAddress.AddressID
+WHERE Person.Address.City IN ('Berlin', 'London');
+
+
+-- 4. List of all customers who live in UK or USA
+
+SELECT ISNULL(Person.Person.FirstName + ' ' + Person.Person.LastName, Sales.Store.Name) AS CustomerName
+FROM Sales.Customer
+LEFT JOIN Person.Person ON Sales.Customer.PersonID = Person.Person.BusinessEntityID
+LEFT JOIN Sales.Store ON Sales.Customer.StoreID = Sales.Store.BusinessEntityID
+JOIN Person.BusinessEntityAddress ON Sales.Customer.CustomerID = Person.BusinessEntityAddress.BusinessEntityID
+JOIN Person.Address ON Person.BusinessEntityAddress.AddressID = Person.Address.AddressID
+JOIN Person.StateProvince ON Person.Address.StateProvinceID = Person.StateProvince.StateProvinceID
+JOIN Person.CountryRegion ON Person.StateProvince.CountryRegionCode = Person.CountryRegion.CountryRegionCode
+WHERE Person.CountryRegion.Name IN ('United Kingdom', 'United States');
+
+
+-- 5. List of all products sorted by product name
+
+SELECT Name FROM Production.Product ORDER BY Name;
+
+-- 6. List of all products where product name starts with an A
+
+SELECT Name FROM Production.Product WHERE Name LIKE 'A%';
+
+-- 7. List of customers who ever placed an order
+
+SELECT DISTINCT ISNULL(Person.Person.FirstName + ' ' + Person.Person.LastName, Sales.Store.Name) AS CustomerName
+FROM Sales.SalesOrderHeader soh
+JOIN Sales.Customer  ON soh.CustomerID = Sales.Customer.CustomerID
+LEFT JOIN Person.Person  ON Sales.Customer.PersonID = Person.Person.BusinessEntityID
+LEFT JOIN Sales.Store  ON Sales.Customer.StoreID = Sales.Store.BusinessEntityID;
+
+-- 8. List of Customers who live in London and have bought chai
+
+SELECT DISTINCT ISNULL(Person.Person.FirstName + ' ' + Person.Person.LastName, Sales.Store.Name) AS CustomerName
+FROM Sales.SalesOrderHeader
+JOIN Sales.SalesOrderDetail ON Sales.SalesOrderHeader.SalesOrderID = Sales.SalesOrderDetail.SalesOrderID
+JOIN Production.Product ON Sales.SalesOrderDetail.ProductID = Production.Product.ProductID
+JOIN Sales.Customer ON Sales.SalesOrderHeader.CustomerID = Sales.Customer.CustomerID
+LEFT JOIN Person.Person ON Sales.Customer.PersonID = Person.Person.BusinessEntityID
+LEFT JOIN Sales.Store ON Sales.Customer.StoreID = Sales.Store.BusinessEntityID
+JOIN Person.BusinessEntityAddress ON Sales.Customer.CustomerID = Person.BusinessEntityAddress.BusinessEntityID
+JOIN Person.Address ON Person.BusinessEntityAddress.AddressID = Person.Address.AddressID
+WHERE Person.Address.City = 'London' AND Production.Product.Name = 'Chai';
+
+
+-- 9. List of customers who never place an order
+
+SELECT ISNULL(p.FirstName + ' ' + p.LastName, s.Name) AS CustomerName
+FROM Sales.Customer c
+LEFT JOIN Person.Person p ON c.PersonID = p.BusinessEntityID
+LEFT JOIN Sales.Store s ON c.StoreID = s.BusinessEntityID
+LEFT JOIN Sales.SalesOrderHeader soh ON c.CustomerID = soh.CustomerID
+WHERE soh.SalesOrderID IS NULL;
+
+-- 10. List of customers who ordered Tofu
+
+SELECT DISTINCT ISNULL(p.FirstName + ' ' + p.LastName, s.Name) AS CustomerName
+FROM Sales.SalesOrderHeader soh
+JOIN Sales.SalesOrderDetail sod ON soh.SalesOrderID = sod.SalesOrderID
+JOIN Production.Product pr ON sod.ProductID = pr.ProductID
+JOIN Sales.Customer c ON soh.CustomerID = c.CustomerID
+LEFT JOIN Person.Person p ON c.PersonID = p.BusinessEntityID
+LEFT JOIN Sales.Store s ON c.StoreID = s.BusinessEntityID
+WHERE pr.Name = 'Tofu';
+
+-- 11. Details of first order of the system
+
+SELECT TOP 1 * FROM Sales.SalesOrderHeader ORDER BY OrderDate ASC;
+
+-- 12. Find the details of most expensive order date
+
+SELECT TOP 1 OrderDate, TotalDue FROM Sales.SalesOrderHeader ORDER BY TotalDue DESC;
+
+-- 13. For each order get the OrderID and Average quantity of items in that order
+
+SELECT SalesOrderID, AVG(OrderQty) AS AvgQuantity FROM Sales.SalesOrderDetail GROUP BY SalesOrderID;
+
+-- 14. For each order get the orderID, minimum quantity and maximum quantity for that order
+
+SELECT SalesOrderID, MIN(OrderQty) AS MinQty, MAX(OrderQty) AS MaxQty FROM Sales.SalesOrderDetail GROUP BY SalesOrderID;
+
+-- 15. Get a list of all managers and total number of employees who report to them
+
+
+
+-- 16. Get the OrderID and the total quantity for each order that has a total quantity of greater than 300
+
+SELECT SalesOrderID, SUM(OrderQty) AS TotalQty FROM Sales.SalesOrderDetail GROUP BY SalesOrderID HAVING SUM(OrderQty) > 300;
+
+-- 17. List of all orders placed on or after 1996/12/31
+
+SELECT * FROM Sales.SalesOrderHeader WHERE OrderDate >= '1996-12-31';
+
+-- 18. List of all orders shipped to Canada
+
+SELECT soh.* 
+FROM Sales.SalesOrderHeader soh
+JOIN Person.Address a ON soh.ShipToAddressID = a.AddressID
+JOIN Person.StateProvince sp ON a.StateProvinceID = sp.StateProvinceID
+JOIN Person.CountryRegion cr ON sp.CountryRegionCode = cr.CountryRegionCode
+WHERE cr.Name = 'Canada';
+
+-- Question 19: list of all orders with order total > 200
+
+SELECT SalesOrderID, SUM(LineTotal) AS OrderTotal
+FROM Sales.SalesOrderDetail
+GROUP BY SalesOrderID
+HAVING SUM(LineTotal) > 200;
+
+-- Question 20: List of countries and sales made in each country
+
+SELECT Person.CountryRegion.Name AS Country, SUM(Sales.SalesOrderHeader.TotalDue) AS TotalSales
+FROM Sales.SalesOrderHeader
+JOIN Person.Address ON Sales.SalesOrderHeader.BillToAddressID = Person.Address.AddressID
+JOIN Person.StateProvince ON Person.Address.StateProvinceID = Person.StateProvince.StateProvinceID
+JOIN Person.CountryRegion ON Person.StateProvince.CountryRegionCode = Person.CountryRegion.CountryRegionCode
+GROUP BY Person.CountryRegion.Name;
+
+
+-- Question 21: Customer ContactName and number of orders
+
+SELECT p.FirstName + ' ' + p.LastName AS ContactName, COUNT(soh.SalesOrderID) AS OrderCount
+FROM Sales.Customer c
+JOIN Person.Person p ON c.PersonID = p.BusinessEntityID
+JOIN Sales.SalesOrderHeader soh ON c.CustomerID = soh.CustomerID
+GROUP BY p.FirstName, p.LastName;
+
+-- Question 22: Customers who placed more than 3 orders
+
+SELECT p.FirstName + ' ' + p.LastName AS ContactName, COUNT(*) AS OrderCount
+FROM Sales.Customer c
+JOIN Person.Person p ON c.PersonID = p.BusinessEntityID
+JOIN Sales.SalesOrderHeader soh ON c.CustomerID = soh.CustomerID
+GROUP BY p.FirstName, p.LastName
+HAVING COUNT(*) > 3;
+
+-- Question 23: Discontinued products ordered between 1/1/1997 and 1/1/1998
+
+SELECT DISTINCT p.Name
+FROM Production.Product p
+JOIN Sales.SalesOrderDetail sod ON p.ProductID = sod.ProductID
+JOIN Sales.SalesOrderHeader soh ON sod.SalesOrderID = soh.SalesOrderID
+WHERE p.DiscontinuedDate IS NOT NULL
+AND soh.OrderDate BETWEEN '1997-01-01' AND '1998-01-01';
+
+-- Question 24: Employee name and supervisor name
+
+SELECT e.BusinessEntityID, p1.FirstName + ' ' + p1.LastName AS EmployeeName,
+       p2.FirstName + ' ' + p2.LastName AS SupervisorName
+FROM HumanResources.Employee e
+LEFT JOIN HumanResources.Employee m ON e.OrganizationNode.GetAncestor(1) = m.OrganizationNode
+JOIN Person.Person p1 ON e.BusinessEntityID = p1.BusinessEntityID
+LEFT JOIN Person.Person p2 ON m.BusinessEntityID = p2.BusinessEntityID;
+
+-- Question 25: Employee ID and total sales
+
+SELECT soh.SalesPersonID AS EmployeeID, SUM(soh.TotalDue) AS TotalSales
+FROM Sales.SalesOrderHeader soh
+WHERE soh.SalesPersonID IS NOT NULL
+GROUP BY soh.SalesPersonID;
+
+-- Question 26: Employees whose FirstName contains 'a'
+
+SELECT FirstName, LastName
+FROM Person.Person
+WHERE FirstName LIKE '%a%';
+
+-- Question 27: Managers with more than 4 people reporting to them
+
+
+-- Question 28: Orders and Product Names
+
+SELECT soh.SalesOrderID, p.Name AS ProductName
+FROM Sales.SalesOrderHeader soh
+JOIN Sales.SalesOrderDetail sod ON soh.SalesOrderID = sod.SalesOrderID
+JOIN Production.Product p ON sod.ProductID = p.ProductID;
+
+-- Question 29: Orders placed by the best customer
+
+
+-- Question 30: Orders by customers without Fax
+
+
+-- Question 31: Postal codes where Tofu was shipped
+
+SELECT DISTINCT a.PostalCode
+FROM Sales.SalesOrderDetail sod
+JOIN Production.Product p ON sod.ProductID = p.ProductID
+JOIN Sales.SalesOrderHeader soh ON sod.SalesOrderID = soh.SalesOrderID
+JOIN Person.Address a ON soh.ShipToAddressID = a.AddressID
+WHERE p.Name = 'Tofu';
+
+-- Question 32: Product names shipped to France
+
+SELECT DISTINCT Production.Product.Name
+FROM Production.Product
+JOIN Sales.SalesOrderDetail ON Production.Product.ProductID = Sales.SalesOrderDetail.ProductID
+JOIN Sales.SalesOrderHeader ON Sales.SalesOrderDetail.SalesOrderID = Sales.SalesOrderHeader.SalesOrderID
+JOIN Person.Address ON Sales.SalesOrderHeader.ShipToAddressID = Person.Address.AddressID
+JOIN Person.StateProvince ON Person.Address.StateProvinceID = Person.StateProvince.StateProvinceID
+JOIN Person.CountryRegion ON Person.StateProvince.CountryRegionCode = Person.CountryRegion.CountryRegionCode
+WHERE Person.CountryRegion.Name = 'France';
+
+
+-- Question 33: Product names and categories for supplier 'Specialty Biscuits, Ltd.'
+
+SELECT Production.Product.Name AS ProductName, Production.ProductCategory.Name AS Category
+FROM Purchasing.ProductVendor
+JOIN Production.Product ON Purchasing.ProductVendor.ProductID = Production.Product.ProductID
+LEFT JOIN Production.ProductSubcategory ON Production.Product.ProductSubcategoryID = Production.ProductSubcategory.ProductSubcategoryID
+LEFT JOIN Production.ProductCategory ON Production.ProductSubcategory.ProductCategoryID = Production.ProductCategory.ProductCategoryID
+JOIN Purchasing.Vendor ON Purchasing.ProductVendor.BusinessEntityID = Purchasing.Vendor.BusinessEntityID
+WHERE Purchasing.Vendor.Name = 'Specialty Biscuits, Ltd.';
+
+
+-- Question 34: Products never ordered
+
+SELECT p.Name
+FROM Production.Product p
+LEFT JOIN Sales.SalesOrderDetail sod ON p.ProductID = sod.ProductID
+WHERE sod.ProductID IS NULL;
+
+-- Question 35: Products with stock < 10 and on order = 0
+
+SELECT Name
+FROM Production.Product
+WHERE SafetyStockLevel < 10 AND ReorderPoint = 0;
+
+-- Question 36: Top 10 countries by sales
+
+SELECT TOP 10 cr.Name AS Country, SUM(soh.TotalDue) AS Sales
+FROM Sales.SalesOrderHeader soh
+JOIN Person.Address a ON soh.BillToAddressID = a.AddressID
+JOIN Person.StateProvince sp ON a.StateProvinceID = sp.StateProvinceID
+JOIN Person.CountryRegion cr ON sp.CountryRegionCode = cr.CountryRegionCode
+GROUP BY cr.Name
+ORDER BY Sales DESC;
+
+
+-- Question 37: Orders per employee for customers A to AO
+
+SELECT SalesPersonID, COUNT(*) AS OrderCount
+FROM Sales.SalesOrderHeader soh
+JOIN Sales.Customer c ON soh.CustomerID = c.CustomerID
+WHERE c.AccountNumber BETWEEN 'AW00000001' AND 'AW00000030'
+GROUP BY SalesPersonID;
+
+-- Question 38: Order date of most expensive order
+
+SELECT TOP 1 OrderDate, TotalDue
+FROM Sales.SalesOrderHeader
+ORDER BY TotalDue DESC;
+
+-- Question 39: Product name and total revenue
+
+SELECT p.Name, SUM(sod.LineTotal) AS Revenue
+FROM Sales.SalesOrderDetail sod
+JOIN Production.Product p ON sod.ProductID = p.ProductID
+GROUP BY p.Name
+ORDER BY Revenue DESC;
+
+-- Question 40: Supplier ID and number of products offered
+
+
+-- Question 41: Top 10 customers by business
+
+SELECT TOP 10 c.CustomerID, SUM(soh.TotalDue) AS TotalPurchase
+FROM Sales.SalesOrderHeader soh
+JOIN Sales.Customer c ON soh.CustomerID = c.CustomerID
+GROUP BY c.CustomerID
+ORDER BY TotalPurchase DESC;
+
+-- Question 42: Total revenue of the company
+
+SELECT SUM(TotalDue) AS TotalRevenue
+FROM Sales.SalesOrderHeader;
