@@ -1,0 +1,48 @@
+CREATE TABLE FileSystem (
+    NodeID INT PRIMARY KEY,
+    NodeName VARCHAR(100),
+    ParentID INT,
+    SizeBytes INT
+);
+
+INSERT INTO FileSystem (NodeID, NodeName, ParentID, SizeBytes) VALUES
+(1, 'Documents', NULL, NULL),
+(2, 'Pictures', NULL, NULL),
+(3, 'File1.txt', 1, 500),
+(4, 'Folder1', 1, NULL),
+(5, 'Image.jpg', 2, 1200),
+(6, 'Subfolder1', 4, NULL),
+(7, 'File2.txt', 4, 750),
+(8, 'File3.txt', 6, 300),
+(9, 'Folder2', 2, NULL),
+(10, 'File4.txt', 9, 250);
+
+
+WITH RecursiveFS AS (
+    SELECT 
+        NodeID,
+        ParentID,
+        SizeBytes,
+        NodeID AS LeafNode
+    FROM FileSystem
+    WHERE SizeBytes IS NOT NULL
+
+    UNION ALL
+
+    SELECT 
+        fs.NodeID,
+        fs.ParentID,
+        r.SizeBytes,
+        r.LeafNode
+    FROM FileSystem fs
+    JOIN RecursiveFS r ON r.ParentID = fs.NodeID
+)
+
+SELECT 
+    fs.NodeID,
+    fs.NodeName,
+    SUM(COALESCE(r.SizeBytes, 0)) AS sizeBytes
+FROM FileSystem fs
+LEFT JOIN RecursiveFS r ON fs.NodeID = r.NodeID
+GROUP BY fs.NodeID, fs.NodeName
+ORDER BY fs.NodeID;
