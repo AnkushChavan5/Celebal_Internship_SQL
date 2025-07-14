@@ -1,0 +1,74 @@
+--Table Structrue
+CREATE TABLE TimeDimension (
+    `Date` DATE PRIMARY KEY,
+    CalendarDay INT,
+    CalendarMonth INT,
+    CalendarQuarter INT,
+    CalendarYear INT,
+    DayNameLong VARCHAR(20),
+    DayNameShort VARCHAR(5),
+    DayNumberOfWeek INT,
+    DayNumberOfYear INT,
+    DaySuffix VARCHAR(5),
+    FiscalWeek INT,
+    FiscalPeriod INT,
+    FiscalQuarter INT,
+    FiscalYear INT,
+    FiscalYearPeriod VARCHAR(10)
+);
+
+
+--Stored Procedure
+DELIMITER $$
+
+CREATE PROCEDURE PopulateTimeDimension(IN input_date DATE)
+BEGIN
+    DECLARE start_date DATE;
+    DECLARE end_date DATE;
+
+    SET start_date = DATE(CONCAT(YEAR(input_date), '-01-01'));
+    SET end_date = DATE(CONCAT(YEAR(input_date), '-12-31'));
+
+    WITH RECURSIVE date_seq AS (
+        SELECT start_date AS current_date
+        UNION ALL
+        SELECT DATE_ADD(current_date, INTERVAL 1 DAY)
+        FROM date_seq
+        WHERE current_date < end_date
+    )
+    INSERT INTO TimeDimension (
+        `Date`, CalendarDay, CalendarMonth, CalendarQuarter, CalendarYear,
+        DayNameLong, DayNameShort, DayNumberOfWeek, DayNumberOfYear, DaySuffix,
+        FiscalWeek, FiscalPeriod, FiscalQuarter, FiscalYear, FiscalYearPeriod
+    )
+    SELECT 
+        current_date,
+        DAY(current_date),
+        MONTH(current_date),
+        QUARTER(current_date),
+        YEAR(current_date),
+        DAYNAME(current_date),
+        LEFT(DAYNAME(current_date), 3),
+        DAYOFWEEK(current_date),
+        DAYOFYEAR(current_date),
+        CONCAT(DAY(current_date),
+            CASE
+                WHEN DAY(current_date) IN (11,12,13) THEN 'th'
+                WHEN DAY(current_date) % 10 = 1 THEN 'st'
+                WHEN DAY(current_date) % 10 = 2 THEN 'nd'
+                WHEN DAY(current_date) % 10 = 3 THEN 'rd'
+                ELSE 'th'
+            END
+        ),
+        WEEK(current_date, 1),
+        MONTH(current_date),
+        QUARTER(current_date),
+        YEAR(current_date),
+        CONCAT(YEAR(current_date), LPAD(MONTH(current_date), 2, '0'))
+    FROM date_seq;
+
+END$$
+
+DELIMITER ;
+
+CALL PopulateTimeDimension('2020-07-14');
